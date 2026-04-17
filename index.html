@@ -1,99 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review App</title>
-    <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AED Cabinet Application Reviewer 2026-2027</title>
+<style>
+  :root {
+    --bg: #fafaf8; --card: #ffffff; --border: #e8e5df; --border2: #d0ccc2;
+    --text: #1a1916; --muted: #6b6760; --faint: #9c9890;
+    --accent: #8b3a2a; --accent-bg: #fdf0ed; --accent-border: #e8b5a8;
+    --yes-bg: #eef7ee; --yes-text: #2d6e2d; --yes-border: #a8d4a8;
+    --no-bg: #fdf0ef; --no-text: #882020; --no-border: #f0b0b0;
+    --maybe-bg: #fdf8ec; --maybe-text: #7a5a10; --maybe-border: #e8d090;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Georgia', serif; color: var(--text); min-height: 100vh; }
+  .page { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  .masthead { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.25rem; }
+  .masthead h1 { font-size: 22px; font-weight: normal; letter-spacing: -0.3px; }
+  .masthead p { font-size: 13px; color: var(--muted); margin-top: 4px; font-family: 'Helvetica Neue', sans-serif; }
+
+  .identity-bar { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .identity-actions { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+
+  .toolbar { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+  .toolbar input[type=text] { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; padding: 7px 11px; border: 1px solid var(--border2); border-radius: 6px; background: white; color: var(--text); outline: none; flex: 1; min-width: 160px; }
+  .toolbar input[type=text]:focus { border-color: #a09890; }
+  .toolbar select { font-family: 'Helvetica Neue', sans-serif; font-size: 13px; padding: 7px 11px; border: 1px solid var(--border2); border-radius: 6px; background: white; color: var(--text); outline: none; cursor: pointer; }
+  .count { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; color: var(--faint); margin-left: auto; white-space: nowrap; }
+
+  .summary-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .summary-chip { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; padding: 5px 12px; border-radius: 99px; border: 1px solid; }
+  .chip-yes { background: var(--yes-bg); color: var(--yes-text); border-color: var(--yes-border); }
+  .chip-no { background: var(--no-bg); color: var(--no-text); border-color: var(--no-border); }
+  .chip-maybe { background: var(--maybe-bg); color: var(--maybe-text); border-color: var(--maybe-border); }
+  .chip-pending { background: #f5f5f3; color: var(--faint); border-color: var(--border); }
+
+  .cards { display: flex; flex-direction: column; gap: 1px; }
+  .card { background: white; border: 1px solid var(--border); }
+  .card:first-child { border-radius: 8px 8px 0 0; }
+  .card:last-child { border-radius: 0 0 8px 8px; }
+  .card:only-child { border-radius: 8px; }
+  .card:hover { z-index: 1; position: relative; border-color: var(--border2); }
+  .card.decided-yes { border-left: 3px solid #5a9e5a; }
+  .card.decided-no { border-left: 3px solid #c06060; }
+  .card.decided-maybe { border-left: 3px solid #c8a840; }
+
+  .card-header { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; user-select: none; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; font-family: 'Helvetica Neue', sans-serif; flex-shrink: 0; }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-name { font-size: 15px; font-weight: normal; }
+  .card-sub { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+  .badge { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; padding: 2px 7px; border-radius: 3px; font-weight: 500; }
+  .chevron { font-size: 14px; color: var(--faint); transition: transform 0.2s; flex-shrink: 0; font-family: sans-serif; }
+  .chevron.open { transform: rotate(90deg); }
+  .decision-mini { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; padding: 3px 8px; border-radius: 3px; font-weight: 500; flex-shrink: 0; }
+  .dm-yes { background: var(--yes-bg); color: var(--yes-text); }
+  .dm-no { background: var(--no-bg); color: var(--no-text); }
+  .dm-maybe { background: var(--maybe-bg); color: var(--maybe-text); }
+
+  .card-body { display: none; border-top: 1px solid var(--border); padding: 18px; }
+  .card-body.open { display: block; }
+
+  .section-label { font-family: 'Helvetica Neue', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; margin-top: 16px; }
+  .section-label:first-child { margin-top: 0; }
+  .section-text { font-size: 13.5px; color: #3a3830; line-height: 1.7; white-space: pre-wrap; }
+
+  .section-wrap.collapsed .section-text { max-height: 220px; overflow: hidden; }
+  .section-wrap { position: relative; }
+  .section-wrap.collapsed::after {
+    content: ''; position: absolute; bottom: 28px; left: 0; right: 0; height: 70px;
+    background: linear-gradient(transparent, white); pointer-events: none;
+  }
+  .expand-btn { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 0; margin-top: 2px; display: block; }
+  .expand-btn:hover { text-decoration: underline; }
+
+  .transport { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; color: var(--faint); margin-top: 12px; }
+
+  .review-section { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .review-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+  .review-label { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; color: var(--muted); flex-shrink: 0; padding-top: 8px; width: 70px; }
+
+  .decision-btns { display: flex; gap: 6px; }
+  .dec-btn { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border2); background: white; cursor: pointer; transition: all 0.12s; color: var(--muted); }
+  .dec-btn:hover { background: #f8f7f5; }
+  .dec-btn.active-yes { background: var(--yes-bg); color: var(--yes-text); border-color: var(--yes-border); font-weight: 500; }
+  .dec-btn.active-no { background: var(--no-bg); color: var(--no-text); border-color: var(--no-border); font-weight: 500; }
+  .dec-btn.active-maybe { background: var(--maybe-bg); color: var(--maybe-text); border-color: var(--maybe-border); font-weight: 500; }
+
+  .notes-area { width: 100%; font-family: 'Helvetica Neue', sans-serif; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 6px; background: #fafaf8; color: var(--text); resize: vertical; min-height: 60px; line-height: 1.5; outline: none; }
+  .notes-area:focus { border-color: #a09890; background: white; }
+  .notes-meta { font-family: 'Helvetica Neue', sans-serif; font-size: 11px; color: var(--faint); margin-top: 4px; }
+
+  .save-btn { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; padding: 5px 14px; border-radius: 5px; border: 1px solid var(--border2); background: white; cursor: pointer; color: var(--muted); transition: all 0.12s; }
+  .save-btn:hover { background: #f5f3f0; }
+  .save-btn.saved { background: var(--yes-bg); color: var(--yes-text); border-color: var(--yes-border); }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--faint); font-family: 'Helvetica Neue', sans-serif; font-size: 14px; }
+
+  .action-btn { font-family: 'Helvetica Neue', sans-serif; font-size: 12px; padding: 6px 13px; border-radius: 5px; border: 1px solid var(--border2); background: white; cursor: pointer; color: var(--muted); transition: all 0.12s; white-space: nowrap; }
+  .action-btn:hover { background: #f5f3f0; }
+  .action-btn.primary { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-border); }
+  .action-btn.primary:hover { background: #f8e5e0; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(16px); background: #1a1916; color: white; font-family: 'Helvetica Neue', sans-serif; font-size: 13px; padding: 10px 18px; border-radius: 6px; opacity: 0; transition: all 0.22s; pointer-events: none; z-index: 999; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #importInput { display: none; }
+</style>
 </head>
 <body>
-    <header>
-        <h1>Application Review Tool</h1>
-        <h2>Manage your applicant reviews</h2>
-    </header>
-    <div class="actions-bar">
-        <button id="export-notes">Export notes</button>
-        <button id="import-notes">Import notes</button>
-        <button id="export-csv">Export CSV</button>
-        <input type="file" id="file-input" style="display:none;">
-    </div>
-    <main>
-        <!-- Existing functionality remains unchanged -->
-    </main>
-    <script src="app.js"></script>
-</body>
-</html>
+<div class="page">
+  <div class="masthead">
+    <h1>AED Cabinet Application Review &mdash; 2026&#8211;2027</h1>
+    <p id="mastheadSub">47 applicants</p>
+  </div>
 
-<style>
-.actions-bar {
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-}
-</style>
+  <div class="identity-bar">
+    <div class="identity-actions">
+      <button class="action-btn primary" onclick="exportNotes()">&#11015; Export notes</button>
+      <button class="action-btn" onclick="document.getElementById('importInput').click()">&#11014; Import notes</button>
+      <button class="action-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
+    <input type="file" id="importInput" accept=".json" onchange="importNotes(event)" />
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Search name, position, track, keyword..." oninput="render()" />
+    <select id="posFilter" onchange="render()"><option value="">All positions</option></select>
+    <select id="yearFilter" onchange="render()"><option value="">All years</option></select>
+    <select id="decFilter" onchange="render()">
+      <option value="">All decisions</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+      <option value="maybe">Maybe</option>
+      <option value="pending">Pending</option>
+    </select>
+    <span class="count" id="countLabel"></span>
+  </div>
+
+  <div class="summary-bar" id="summaryBar"></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
+const ALL = []; // keep your existing ALL data block here exactly as-is
+
 const STORAGE_KEY = 'aed-cabinet-reviews-2026-v3';
-let myReviews = {};
+let reviews = {};
+let openCards = new Set();
+let expandedSections = new Set();
+const noteTimers = {};
 
 function loadLS() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-        const parsedData = JSON.parse(data);
-        myReviews = parsedData.reviews || {};
-    }
-    updateSummary();
-}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const p = JSON.parse(raw);
 
+    if (p && typeof p === 'object' && p.reviews && !p.currentReviewer) {
+      reviews = p.reviews || {};
+      return;
+    }
+    if (p && p.reviews && typeof p.reviews === 'object') {
+      const byReviewer = p.reviews;
+      if (p.currentReviewer && byReviewer[p.currentReviewer]) {
+        reviews = byReviewer[p.currentReviewer] || {};
+      } else {
+        const first = Object.keys(byReviewer)[0];
+        reviews = first ? (byReviewer[first] || {}) : {};
+      }
+    }
+  } catch (e) { reviews = {}; }
+}
 function saveLS() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ reviews: myReviews }));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ reviews })); } catch (e) {}
 }
 
 function getMyRV(name) {
-    return myReviews[name] || { decision: '', notes: '' };
+  return reviews[name] || { decision: '', notes: '' };
 }
+function getOthers(name) { return []; }
 
 function setDec(name, dec) {
-    if (!myReviews[name]) myReviews[name] = {};
-    myReviews[name].decision = dec;
-    myReviews[name].updatedAt = new Date();
-    saveLS();
-    render();
-    updateSummary();
+  if (!reviews[name]) reviews[name] = { decision: '', notes: '' };
+  reviews[name].decision = reviews[name].decision === dec ? '' : dec;
+  reviews[name].updatedAt = new Date().toISOString();
+  saveLS();
+  render();
+  updateSummary();
 }
 
 function saveNotes(name, val) {
-    if (!myReviews[name]) myReviews[name] = {};
-    myReviews[name].notes = val;
-    myReviews[name].updatedAt = new Date();
-    saveLS();
-    updateSummary();
+  if (!reviews[name]) reviews[name] = { decision: '', notes: '' };
+  reviews[name].notes = val;
+  reviews[name].updatedAt = new Date().toISOString();
+  saveLS();
+
+  const btn = document.getElementById('sb-' + slug(name));
+  if (btn) {
+    btn.textContent = 'Saved ✓';
+    btn.classList.add('saved');
+    setTimeout(() => {
+      btn.textContent = 'Save notes';
+      btn.classList.remove('saved');
+    }, 1000);
+  }
+
+  const meta = document.getElementById('nm-' + slug(name));
+  if (meta) meta.textContent = `Last saved ${new Date(reviews[name].updatedAt).toLocaleString()}`;
+  updateSummary();
 }
 
-function importNotes(data) {
-    const reviews = data.reviews || data;
-    Object.assign(myReviews, reviews);
-    saveLS();
-    render();
-    updateSummary();
+function queueAutosave(name, val) {
+  const key = slug(name);
+  clearTimeout(noteTimers[key]);
+  noteTimers[key] = setTimeout(() => saveNotes(name, val), 300);
 }
 
 function exportNotes() {
-    return { exportedAt: new Date(), tool: 'Review App', reviews: myReviews };
+  const payload = { exportedAt: new Date().toISOString(), tool: 'AED Cabinet Reviewer 2026-2027', reviews };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'aed_notes.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Notes exported!');
+}
+function importNotes(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      let incoming = null;
+      if (d && d.reviews && typeof d.reviews === 'object') incoming = d.reviews;
+      else if (d && typeof d === 'object') incoming = d;
+      if (!incoming) throw new Error('bad format');
+
+      Object.keys(incoming).forEach(name => {
+        const item = incoming[name] || {};
+        if (!reviews[name]) reviews[name] = { decision: '', notes: '' };
+        if (typeof item.decision === 'string') reviews[name].decision = item.decision;
+        if (typeof item.notes === 'string') reviews[name].notes = item.notes;
+        reviews[name].updatedAt = item.updatedAt || new Date().toISOString();
+      });
+
+      saveLS(); render(); updateSummary();
+      toast('Imported notes');
+    } catch { toast('Import failed: invalid file'); }
+    e.target.value = '';
+  };
+  r.readAsText(file);
+}
+function exportCSV() {
+  const rows = [['Name','Year','Track','Positions','My Decision','My Notes']];
+  ALL.forEach(a => {
+    const rv = getMyRV(a.name);
+    rows.push([a.name, normY(a.year), normT(a.track), a.positions, rv.decision||'pending', (rv.notes||'').replace(/"/g,'""')]);
+  });
+  const blob = new Blob([rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='aed_reviews.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 
-function exportCSV() {
-    // existing CSV export logic
+function slug(n) { return n.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9-]/g,''); }
+function initials(n) { return n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function normY(y) { y=(y||'').trim(); if(y==='Sophmore') return 'Sophomore'; if(y==='Junior (graduating May 2027)') return 'Junior'; return y; }
+function normT(t) { t=(t||'').trim(); if(['Pre PA ','Pre PA','Pre- PA','Pre-PA'].includes(t)) return 'Pre-PA'; if(['Pre-med','Premed'].includes(t)) return 'Pre-Med'; return t; }
+
+const COLORS=[{bg:'#eef3fb',fg:'#2a4a8a'},{bg:'#eef7ee',fg:'#2d6e2d'},{bg:'#fdf0ed',fg:'#8b3a2a'},{bg:'#fdf8ec',fg:'#7a5a10'},{bg:'#f5eefb',fg:'#6a2a8a'},{bg:'#eef7f5',fg:'#1a6a5a'},{bg:'#fbeef5',fg:'#8a2a5a'},{bg:'#f0f5ee',fg:'#3a5a2a'}];
+function colorFor(i){return COLORS[i%COLORS.length];}
+function badgeSty(p){
+  if(p.includes('Pre-Med')||p.includes('MedConnect')) return 'background:#eef3fb;color:#2a4a8a';
+  if(p.includes('PA-CT')||p.includes('Pre PA')||p.includes('Pre-PA')) return 'background:#eef7f5;color:#1a6a5a';
+  if(p.includes('Event')) return 'background:#fdf8ec;color:#7a5a10';
+  if(p.includes('Marketing')) return 'background:#f5eefb;color:#6a2a8a';
+  if(p.includes('New Member')) return 'background:#fbeef5;color:#8a2a5a';
+  if(p.includes('Wellness')) return 'background:#eef7ee;color:#2d6e2d';
+  if(p.includes('Service')) return 'background:#f0f5ee;color:#3a5a2a';
+  if(p.includes('DEI')||p.includes('Diversity')) return 'background:#fff3e8;color:#7a4010';
+  if(p.includes('Academics')) return 'background:#eef3fb;color:#2a4a8a';
+  if(p.includes('Dental')) return 'background:#fdf0ed;color:#8b3a2a';
+  if(p.includes('DPTMP')||p.includes('PT')) return 'background:#f5f0fb;color:#5a2a8a';
+  return 'background:#f5f5f3;color:#6b6760';
+}
+
+const THRESH = 600;
+function toggleSec(key) {
+  if(expandedSections.has(key)) expandedSections.delete(key); else expandedSections.add(key);
+  const wrap=document.getElementById('sw-'+key), btn=document.getElementById('eb-'+key);
+  if(!wrap||!btn) return;
+  const exp=expandedSections.has(key);
+  wrap.classList.toggle('collapsed',!exp);
+  btn.textContent=exp?'Show less ↑':'Show full response ↓';
+}
+function secHtml(label, text, key) {
+  if(!text) return '';
+  const long=text.length>THRESH, exp=expandedSections.has(key);
+  return `<div class="section-label">${label}</div>
+<div class="section-wrap${long&&!exp?' collapsed':''}" id="sw-${key}"><div class="section-text">${esc(text)}</div></div>
+${long?`<button class="expand-btn" id="eb-${key}" onclick="toggleSec('${key}')">${exp?'Show less ↑':'Show full response ↓'}</button>`:''}`;
+}
+
+function populateFilters() {
+  const posSet=new Set(), yrSet=new Set();
+  ALL.forEach(a=>{ a.positions.split(',').forEach(p=>posSet.add(p.trim())); yrSet.add(normY(a.year)); });
+  const ps=document.getElementById('posFilter');
+  [...posSet].sort().forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p.replace(/ \(.*\)/,''); ps.appendChild(o); });
+  const ys=document.getElementById('yearFilter');
+  [...yrSet].sort().forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ys.appendChild(o); });
+}
+function filtered() {
+  const q=document.getElementById('search').value.toLowerCase();
+  const pos=document.getElementById('posFilter').value;
+  const yr=document.getElementById('yearFilter').value;
+  const dec=document.getElementById('decFilter').value;
+  return ALL.filter(a=>{
+    const rv=getMyRV(a.name);
+    const mQ=!q||[a.name,a.positions,normT(a.track),a.fit,a.impact,a.extra,a.time].some(f=>(f||'').toLowerCase().includes(q));
+    const mP=!pos||a.positions.includes(pos);
+    const mY=!yr||normY(a.year)===yr;
+    const mD=!dec||(dec==='pending'?!rv.decision:rv.decision===dec);
+    return mQ&&mP&&mY&&mD;
+  });
 }
 
 function updateSummary() {
-    const totalApplicants = Object.keys(myReviews).length;
-    document.querySelector('h2').innerText = `${totalApplicants} applicants`;
+  const yes=ALL.filter(a=>getMyRV(a.name).decision==='yes').length;
+  const no=ALL.filter(a=>getMyRV(a.name).decision==='no').length;
+  const maybe=ALL.filter(a=>getMyRV(a.name).decision==='maybe').length;
+  const pending=ALL.length-yes-no-maybe;
+  document.getElementById('summaryBar').innerHTML=`
+    <span class="summary-chip chip-yes">Yes: ${yes}</span>
+    <span class="summary-chip chip-no">No: ${no}</span>
+    <span class="summary-chip chip-maybe">Maybe: ${maybe}</span>
+    <span class="summary-chip chip-pending">Pending: ${pending}</span>`;
+  document.getElementById('mastheadSub').textContent = `${ALL.length} applicants`;
+}
+
+function toggleCard(idx) {
+  if(openCards.has(idx)) openCards.delete(idx); else openCards.add(idx);
+  render();
 }
 
 function render() {
-    // Existing rendering logic without reviewer panels and AI features
+  const apps=filtered();
+  document.getElementById('countLabel').textContent=`${apps.length} / ${ALL.length}`;
+  const container=document.getElementById('cards');
+  if(!apps.length){ container.innerHTML='<div class="empty">No applicants match your filters.</div>'; return; }
+
+  container.innerHTML=apps.map(a=>{
+    const gi=ALL.indexOf(a);
+    const isOpen=openCards.has(gi);
+    const rv=getMyRV(a.name);
+    const col=colorFor(gi);
+    const sl=slug(a.name);
+    const decCls=rv.decision?`decided-${rv.decision}`:'';
+    const positions=a.positions.split(',').map(p=>p.trim()).filter(Boolean);
+    const dmHtml=rv.decision?`<span class="decision-mini dm-${rv.decision}">${rv.decision[0].toUpperCase()+rv.decision.slice(1)}</span>`:'';
+    const nameEsc=a.name.replace(/'/g,"\\'");
+
+    const bodyHtml=isOpen?`<div class="card-body open" id="body-${gi}">
+      ${secHtml('Why a good fit', a.fit, gi+'-fit')}
+      ${secHtml('Time management', a.time, gi+'-time')}
+      ${secHtml('Planned impact', a.impact, gi+'-impact')}
+      ${a.extra?secHtml('Additional context', a.extra, gi+'-extra'):''}
+      <div class="transport">${a.transport?'✓ Has transportation':'✗ No transportation noted'}</div>
+      <div class="review-section">
+        <div class="review-row">
+          <div class="review-label">Decision</div>
+          <div class="decision-btns">
+            <button class="dec-btn ${rv.decision==='yes'?'active-yes':''}" onclick="setDec('${nameEsc}','yes')">Yes</button>
+            <button class="dec-btn ${rv.decision==='maybe'?'active-maybe':''}" onclick="setDec('${nameEsc}','maybe')">Maybe</button>
+            <button class="dec-btn ${rv.decision==='no'?'active-no':''}" onclick="setDec('${nameEsc}','no')">No</button>
+          </div>
+        </div>
+        <div class="review-row">
+          <div class="review-label">My notes</div>
+          <div style="flex:1">
+            <textarea class="notes-area" id="na-${sl}" placeholder="Add your notes, observations, concerns…" rows="3" oninput="queueAutosave('${nameEsc}', this.value)">${esc(rv.notes||'')}</textarea>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+              <button class="save-btn" id="sb-${sl}" onclick="saveNotes('${nameEsc}',document.getElementById('na-${sl}').value)">Save notes</button>
+              ${rv.updatedAt?`<span class="notes-meta" id="nm-${sl}">Last saved ${new Date(rv.updatedAt).toLocaleString()}</span>`:`<span class="notes-meta" id="nm-${sl}"></span>`}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`:`<div class="card-body" id="body-${gi}"></div>`;
+
+    return `<div class="card ${decCls}" id="card-${gi}">
+  <div class="card-header" onclick="toggleCard(${gi})">
+    <div class="avatar" style="background:${col.bg};color:${col.fg}">${initials(a.name)}</div>
+    <div class="card-meta">
+      <div class="card-name">${esc(a.name)}</div>
+      <div class="card-sub">${normY(a.year)} &middot; ${normT(a.track)}</div>
+      <div class="badges">${positions.map(p=>`<span class="badge" style="${badgeSty(p)}">${esc(p.replace(/ \(.*\)/,'').replace(/-- .*/,'').trim())}</span>`).join('')}</div>
+    </div>
+    ${dmHtml}
+    <div class="chevron ${isOpen?'open':''}">&#8250;</div>
+  </div>
+  ${bodyHtml}
+</div>`;
+  }).join('');
 }
 
+let _toastT=null;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); if(_toastT)clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove('show'),2800); }
+
 loadLS();
+populateFilters();
+render();
+updateSummary();
 </script>
+</body>
+</html>
